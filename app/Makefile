@@ -73,7 +73,7 @@ $(info COIN  = [$(COIN)])
 DEFINES += APP_STANDARD
 ifeq ($(COIN),Genshiro)
 APPNAME = "Genshiro"
-APPPATH = "44'/99999996'" --path "44'/434'"
+APPPATH = "44'/99999996'" --path "44'/354'" --path "44'/434'"
 else
 define error_message
 
