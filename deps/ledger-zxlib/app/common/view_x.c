@@ -34,7 +34,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#if defined(TARGET_NANOX)
+#if defined(TARGET_NANOX) || defined(TARGET_NANOS2)
 
 void h_network_toggle();
 void h_network_update();
