@@ -12,6 +12,7 @@ extern "C" {
 typedef enum {
     Network_GENS = 0,
     Network_KSM = 1,
+    Network_DOT = 2,
     Network_MAX
 } NetworkID;
 
