@@ -325,7 +325,10 @@ parser_error_t _readOrderType(parser_context_t* c, pd_OrderType_t* v){
         return err;
 
     if (v->type == DexOrder_LIMIT) {
-        return _readFixedI64(c, &v->limit);
+        err = _readFixedI64(c, &v->price);
+        if (err != parser_ok)
+            return err;
+        return _readu64(c, &v->expiration_time);
     }
     return parser_ok;
 }
@@ -446,7 +449,7 @@ parser_error_t _toStringOrderType(
     CLEAN_AND_CHECK()
 
     if (v->type == DexOrder_LIMIT) {
-        *pageCount = 2;
+        *pageCount = 3;
     }
 
     if (pageIdx == 0) {
@@ -457,7 +460,18 @@ parser_error_t _toStringOrderType(
         char bufferUI[100];
         MEMSET(outValue, 0, outValueLen);
         MEMSET(bufferUI, 0, sizeof(bufferUI));
-        char *err = int64_to_str(bufferUI, sizeof(bufferUI), v->limit);
+        char *err = int64_to_str(bufferUI, sizeof(bufferUI), v->price);
+        if (err != NULL) {
+            return parser_unexpected_value;
+        }
+        intstr_to_fpstr_inplace(bufferUI, sizeof(bufferUI), 9);
+        snprintf(outValue, outValueLen, "%s", bufferUI);
+    }
+    else if (pageIdx == 2) {
+        char bufferUI[100];
+        MEMSET(outValue, 0, outValueLen);
+        MEMSET(bufferUI, 0, sizeof(bufferUI));
+        char *err = uint64_to_str(bufferUI, sizeof(bufferUI), v->expiration_time);
         if (err != NULL) {
             return parser_unexpected_value;
         }

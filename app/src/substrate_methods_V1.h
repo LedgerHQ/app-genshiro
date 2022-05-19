@@ -136,6 +136,22 @@ typedef struct {
     pd_Balance_t amount;
 } pd_gensOptOut_buy_V1_t;
 
+/// Pallet EqDex
+#define PD_CALL_EQDEX_CREATE_ORDER_V1 1
+typedef struct {
+    eq_Asset_t asset;
+    pd_OrderType_t order_type;
+    pd_u8_t side;
+    pd_FixedU128_t amount;
+} pd_eqDex_create_order_V1_t;
+
+#define PD_CALL_EQDEX_DELETE_ORDER_EXTERNAL_V1 1
+typedef struct {
+    eq_Asset_t asset;
+    pd_u64_t order_id;
+    pd_FixedI64_t price;
+} pd_eqDex_delete_order_external_V1_t;
+
 typedef union {
 } pd_MethodBasic_V1_t;
 
@@ -157,6 +173,8 @@ typedef union {
     pd_eqbalances_transfer_V1_t eqbalances_transfer_V1;
     pd_subaccounts_transfer_to_subaccount_V1_t subaccounts_transfer_to_subaccount_V1;
     pd_subaccounts_transfer_from_subaccount_V1_t subaccounts_transfer_from_subaccount_V1;
+    pd_eqDex_create_order_V1_t eqDex_create_order_V1;
+    pd_eqDex_delete_order_external_V1_t eqDex_delete_order_external_V1;
 } pd_MethodNested_V1_t;
 
 typedef union {

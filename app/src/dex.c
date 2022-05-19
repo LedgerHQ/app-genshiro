@@ -12,7 +12,7 @@ static const char* ORDER_MARKET = "Market";
 static const char* SIDE_BUY  = "Buy";
 static const char* SIDE_SELL = "Sell";
 
-static const char* ERROR = "ERROR";
+static const char* UNKNOWN = "UNKNOWN";
 
 const char *get_order_type_name(uint8_t order_type) {
     switch (order_type) {
@@ -21,7 +21,7 @@ const char *get_order_type_name(uint8_t order_type) {
         case 1:
             return ORDER_MARKET;
         default:
-            return ERROR;
+            return UNKNOWN;
     }
 }
 
@@ -32,6 +32,6 @@ const char* get_order_side_name(uint8_t side) {
         case 1:
             return SIDE_SELL;
         default:
-            return ERROR;
+            return UNKNOWN;
     }
 }
