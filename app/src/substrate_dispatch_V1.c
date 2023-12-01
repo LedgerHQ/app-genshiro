@@ -21,6 +21,7 @@
 
 #define GET_CALL_PRIV_IDX(pallet_id, method_id) ((uint16_t)pallet_id << 8u) + method_id
 
+#define PALLET_ID_SYSTEM         0
 #define PALLET_ID_UTILITY        1
 #define PALLET_ID_EQBALANCES    13
 #define PALLET_ID_VESTING       22
@@ -29,9 +30,15 @@
 #define PALLET_ID_GENSCROWDLOAN 30
 #define PALLET_ID_GENSOPTOUT    31
 #define PALLET_ID_CURVE_AMM     32
+#define PALLET_ID_EQDEX         35
+
+/// Pallet System
+#define METHOD_ID_REMARK 1
+#define PRIV_ID_REMARK GET_CALL_PRIV_IDX(PALLET_ID_SYSTEM, METHOD_ID_REMARK)
 
 /// Pallet Utility
 #define METHOD_ID_BATCH 0
+#define METHOD_ID_BATCH_ALL 2
 #define PRIV_ID_BATCH GET_CALL_PRIV_IDX(PALLET_ID_UTILITY, METHOD_ID_BATCH)
 
 /// Pallet EqBalances
@@ -77,6 +84,23 @@
 #define PRIV_ID_GENSOPTOUT_SELL                     GET_CALL_PRIV_IDX(PALLET_ID_GENSOPTOUT, METHOD_ID_GENSOPTOUT_SELL)
 #define PRIV_ID_GENSOPTOUT_DISTRIBUTE_EXTERNAL      GET_CALL_PRIV_IDX(PALLET_ID_GENSOPTOUT, METHOD_ID_GENSOPTOUT_DISTRIBUTE_EXTERNAL)
 #define PRIV_ID_GENSOPTOUT_BUY                      GET_CALL_PRIV_IDX(PALLET_ID_GENSOPTOUT, METHOD_ID_GENSOPTOUT_BUY)
+
+/// Pallet EqDex
+#define METHOD_ID_EQDEX_CREATE_ORDER                0
+#define METHOD_ID_EQDEX_DELETE_ORDER_EXTERNAL       2
+
+#define PRIV_ID_EQDEX_CREATE_ORDER                  GET_CALL_PRIV_IDX(PALLET_ID_EQDEX, METHOD_ID_EQDEX_CREATE_ORDER)
+#define PRIV_ID_EQDEX_DELETE_ORDER_EXTERNAL         GET_CALL_PRIV_IDX(PALLET_ID_EQDEX, METHOD_ID_EQDEX_DELETE_ORDER_EXTERNAL)
+
+
+
+/// Pallet System
+__Z_INLINE parser_error_t _readMethod_system_remark_V1(
+    parser_context_t* c, pd_system_remark_V1_t* m)
+{
+    CHECK_ERROR(_readBytes(c, &m->remark))
+    return parser_ok;
+}
 
 /// Pallet Utility
 __Z_INLINE parser_error_t _readMethod_utility_batch_V1(
@@ -211,6 +235,25 @@ __Z_INLINE parser_error_t  _readMethod_gensOptOut_buy_V1(
     return parser_ok;
 }
 
+/// Pallet EqDex
+__Z_INLINE parser_error_t  _readMethod_eqDex_create_order_V1(
+    parser_context_t* c, pd_eqDex_create_order_V1_t* m)
+{
+    CHECK_ERROR(_readAsset(c, &m->asset))
+    CHECK_ERROR(_readOrderType(c, &m->order_type))
+    CHECK_ERROR(_readu8(c, &m->side))
+    CHECK_ERROR(_readFixedU128(c, &m->amount))
+    return parser_ok;
+}
+
+__Z_INLINE parser_error_t  _readMethod_eqDex_delete_order_external_V1(
+    parser_context_t* c, pd_eqDex_delete_order_external_V1_t* m)
+{
+    CHECK_ERROR(_readAsset(c, &m->asset))
+    CHECK_ERROR(_readu64(c, &m->order_id))
+    CHECK_ERROR(_readFixedI64(c, &m->price))
+    return parser_ok;
+}
 
 
 parser_error_t _readMethod_V1(
@@ -222,9 +265,14 @@ parser_error_t _readMethod_V1(
     uint16_t callPrivIdx = ((uint16_t)moduleIdx << 8u) + callIdx;
 
     switch (callPrivIdx) {
+        /// Pallet System
+        case PRIV_ID_REMARK:
+            CHECK_ERROR(_readMethod_system_remark_V1(c, &method->nested.system_remark_V1))
+            break;
+
             /// Pallet Utility
         case PRIV_ID_BATCH:
-            CHECK_ERROR(_readMethod_utility_batch_V1(c, &method->basic.utility_batch_V1))
+            CHECK_ERROR(_readMethod_utility_batch_V1(c, &method->nested.utility_batch_V1))
             break;
 
             /// Pallet EqBalances
@@ -234,7 +282,7 @@ parser_error_t _readMethod_V1(
 
             /// Pallet Vesting
         case PRIV_ID_VEST:
-            CHECK_ERROR(_readMethod_vesting_vest_V1(c, &method->basic.vesting_vest_V1))
+            CHECK_ERROR(_readMethod_vesting_vest_V1(c, &method->nested.vesting_vest_V1))
             break;
 
             /// Pallet Subaccounts
@@ -247,40 +295,48 @@ parser_error_t _readMethod_V1(
 
             /// Pallet EqBridge
         case PRIV_ID_BRIDGE_TRANSFER_NATIVE:
-            CHECK_ERROR(_readMethod_eqbridge_transfer_native_V1(c, &method->basic.eqbridge_transfer_native_V1))
+            CHECK_ERROR(_readMethod_eqbridge_transfer_native_V1(c, &method->nested.eqbridge_transfer_native_V1))
             break;
 
             /// Pallet EqBridge
         case PRIV_ID_GENS_CROWD_CLAIM:
-            CHECK_ERROR(_readMethod_gensCrowdloan_claim_V1(c, &method->basic.gensCrowdloan_claim_V1))
+            CHECK_ERROR(_readMethod_gensCrowdloan_claim_V1(c, &method->nested.gensCrowdloan_claim_V1))
             break;
 
             /// Pallet CurveAmm
         case PRIV_ID_CURVE_ADD_LIQUIDITY:
-            CHECK_ERROR(_readMethod_curveAmm_add_liquidity_V1(c, &method->basic.curveAmm_add_liquidity_V1))
+            CHECK_ERROR(_readMethod_curveAmm_add_liquidity_V1(c, &method->nested.curveAmm_add_liquidity_V1))
             break;
         case PRIV_ID_CURVE_EXCHANGE:
-            CHECK_ERROR(_readMethod_curveAmm_exchange_V1(c, &method->basic.curveAmm_exchange_V1))
+            CHECK_ERROR(_readMethod_curveAmm_exchange_V1(c, &method->nested.curveAmm_exchange_V1))
             break;
         case PRIV_ID_CURVE_REMOVE_LIQUIDITY:
-            CHECK_ERROR(_readMethod_curveAmm_remove_liquidity_V1(c, &method->basic.curveAmm_remove_liquidity_V1))
+            CHECK_ERROR(_readMethod_curveAmm_remove_liquidity_V1(c, &method->nested.curveAmm_remove_liquidity_V1))
             break;
         case PRIV_ID_CURVE_REMOVE_LIQUIDITY_IMBALANCE:
-            CHECK_ERROR(_readMethod_curveAmm_remove_liquidity_imbalance_V1(c, &method->basic.curveAmm_remove_liquidity_imbalance_V1))
+            CHECK_ERROR(_readMethod_curveAmm_remove_liquidity_imbalance_V1(c, &method->nested.curveAmm_remove_liquidity_imbalance_V1))
             break;
         case PRIV_ID_CURVE_REMOVE_LIQUIDITY_ONE_COIN:
-            CHECK_ERROR(_readMethod_curveAmm_remove_liquidity_one_coin_V1(c, &method->basic.curveAmm_remove_liquidity_one_coin_V1))
+            CHECK_ERROR(_readMethod_curveAmm_remove_liquidity_one_coin_V1(c, &method->nested.curveAmm_remove_liquidity_one_coin_V1))
             break;
 
             /// Pallet GensOptOut
         case PRIV_ID_GENSOPTOUT_SELL:
-            CHECK_ERROR(_readMethod_gensOptOut_sell_V1(c, &method->basic.gensOptOut_sell_V1))
+            CHECK_ERROR(_readMethod_gensOptOut_sell_V1(c, &method->nested.gensOptOut_sell_V1))
             break;
         case PRIV_ID_GENSOPTOUT_DISTRIBUTE_EXTERNAL:
-            CHECK_ERROR(_readMethod_gensOptOut_distribute_external_V1(c, &method->basic.gensOptOut_distribute_external_V1))
+            CHECK_ERROR(_readMethod_gensOptOut_distribute_external_V1(c, &method->nested.gensOptOut_distribute_external_V1))
             break;
         case PRIV_ID_GENSOPTOUT_BUY:
-            CHECK_ERROR(_readMethod_gensOptOut_buy_V1(c, &method->basic.gensOptOut_buy_V1))
+            CHECK_ERROR(_readMethod_gensOptOut_buy_V1(c, &method->nested.gensOptOut_buy_V1))
+            break;
+
+        /// Pallet EqDex
+        case PRIV_ID_EQDEX_CREATE_ORDER:
+            CHECK_ERROR(_readMethod_eqDex_create_order_V1(c, &method->nested.eqDex_create_order_V1))
+            break;
+        case PRIV_ID_EQDEX_DELETE_ORDER_EXTERNAL:
+            CHECK_ERROR(_readMethod_eqDex_delete_order_external_V1(c, &method->nested.eqDex_delete_order_external_V1))
             break;
     default:
         return parser_not_supported;
@@ -297,6 +353,8 @@ parser_error_t _readMethod_V1(
 const char* _getMethod_ModuleName_V1(uint8_t moduleIdx)
 {
     switch (moduleIdx) {
+    case PALLET_ID_SYSTEM:
+        return STR_MO_SYSTEM;
     case PALLET_ID_UTILITY:
         return STR_MO_UTILITY;
     case PALLET_ID_EQBALANCES:
@@ -313,6 +371,8 @@ const char* _getMethod_ModuleName_V1(uint8_t moduleIdx)
         return STR_MO_CURVE_AMM;
     case PALLET_ID_GENSOPTOUT:
         return STR_MO_GENSOPTOUT;
+    case PALLET_ID_EQDEX:
+        return STR_MO_EQDEX;
     default:
         return NULL;
     }
@@ -325,6 +385,9 @@ const char* _getMethod_Name_V1(uint8_t moduleIdx, uint8_t callIdx)
     uint16_t callPrivIdx = ((uint16_t)moduleIdx << 8u) + callIdx;
 
     switch (callPrivIdx) {
+        /// Pallet System
+    case PRIV_ID_REMARK:                           // System:remark
+        return STR_ME_REMARK;
         /// Pallet Utility
     case PRIV_ID_BATCH:                           // Utility:batch
         return STR_ME_BATCH;
@@ -363,6 +426,11 @@ const char* _getMethod_Name_V1(uint8_t moduleIdx, uint8_t callIdx)
         return STR_ME_DISTRIBUTE_EXTERNAL;
     case PRIV_ID_GENSOPTOUT_BUY:                  // GensOptOut:buy
         return STR_ME_BUY;
+        /// Pallet EqDex
+    case PRIV_ID_EQDEX_CREATE_ORDER:              // EqDex::create_order
+        return STR_ME_CREATE_ORDER;
+    case PRIV_ID_EQDEX_DELETE_ORDER_EXTERNAL:     // EqDex::delete_order_external
+        return STR_ME_DELETE_ORDER_EXTERNAL;
     }
 
     return NULL;
@@ -373,6 +441,8 @@ uint8_t _getMethod_NumItems_V1(uint8_t moduleIdx, uint8_t callIdx)
     uint16_t callPrivIdx = ((uint16_t)moduleIdx << 8u) + callIdx;
 
     switch (callPrivIdx) {
+    case PRIV_ID_REMARK:                             // System:remark
+        return 1;
     case PRIV_ID_BATCH:                             // Utility:batch
         return 1;
     case PRIV_ID_TRANSFER:                          // EqBalances:transfer
@@ -403,6 +473,10 @@ uint8_t _getMethod_NumItems_V1(uint8_t moduleIdx, uint8_t callIdx)
         return 2;
     case PRIV_ID_GENSOPTOUT_BUY:                    // GensOptOut:buy
         return 1;
+    case PRIV_ID_EQDEX_CREATE_ORDER:                // EqDex:create_order
+        return 4;
+    case PRIV_ID_EQDEX_DELETE_ORDER_EXTERNAL:       // EqDex:delete_order_external
+        return 3;
     default:
         return 0;
     }
@@ -415,7 +489,14 @@ const char* _getMethod_ItemName_V1(uint8_t moduleIdx, uint8_t callIdx, uint8_t i
     uint16_t callPrivIdx = ((uint16_t)moduleIdx << 8u) + callIdx;
 
     switch (callPrivIdx) {
-    case PRIV_ID_BATCH:
+    case PRIV_ID_REMARK: // System:remark
+        switch (itemIdx) {
+        case 0:
+            return STR_IT_remark;
+        default:
+            return NULL;
+        }
+    case PRIV_ID_BATCH: // Utility:batch
         switch (itemIdx) {
         case 0:
             return STR_IT_calls;
@@ -535,6 +616,30 @@ const char* _getMethod_ItemName_V1(uint8_t moduleIdx, uint8_t callIdx, uint8_t i
         default:
             return NULL;
         }
+    case PRIV_ID_EQDEX_CREATE_ORDER:               // EqDex:create_order
+        switch (itemIdx) {
+        case 0:
+            return STR_IT_asset;
+        case 1:
+            return STR_IT_order_type;
+        case 2:
+            return STR_IT_side;
+        case 3:
+            return STR_IT_amount;
+        default:
+            return NULL;
+        }
+    case PRIV_ID_EQDEX_DELETE_ORDER_EXTERNAL:      // EqDex:delete_order_external
+        switch (itemIdx) {
+        case 0:
+            return STR_IT_asset;
+        case 1:
+            return STR_IT_order_id;
+        case 2:
+            return STR_IT_price;
+        default:
+            return NULL;
+        }
     default:
         return NULL;
     }
@@ -552,11 +657,21 @@ parser_error_t _getMethod_ItemValue_V1(
     uint16_t callPrivIdx = ((uint16_t)moduleIdx << 8u) + callIdx;
 
     switch (callPrivIdx) {
+        case PRIV_ID_REMARK:  // System:remark
+        switch (itemIdx) {
+            case 0:
+                return _toStringBytes(
+                        &m->nested.system_remark_V1.remark,
+                        outValue, outValueLen,
+                        pageIdx, pageCount);
+            default:
+                return parser_no_data;
+        }
         case PRIV_ID_BATCH:  // Utility:batch
         switch (itemIdx) {
             case 0:
                 return _toStringVecCall(
-                        &m->basic.utility_batch_V1.calls,
+                        &m->nested.utility_batch_V1.calls,
                         outValue, outValueLen,
                         pageIdx, pageCount);
             default:
@@ -609,22 +724,22 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringAmount(
-                        &m->basic.eqbridge_transfer_native_V1.amount,
+                        &m->nested.eqbridge_transfer_native_V1.amount,
                         outValue, outValueLen,
                         pageIdx, pageCount);
                 case 1:
                     return _toStringBytes(
-                            &m->basic.eqbridge_transfer_native_V1.recipient,
+                            &m->nested.eqbridge_transfer_native_V1.recipient,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 2:
                     return _toStringChainId_V1(
-                                &m->basic.eqbridge_transfer_native_V1.chainId,
+                                &m->nested.eqbridge_transfer_native_V1.chainId,
                                 outValue, outValueLen,
                                 pageIdx, pageCount);
                 case 3:
                     return _toStringResourceId_V1(
-                            &m->basic.eqbridge_transfer_native_V1.resourceId,
+                            &m->nested.eqbridge_transfer_native_V1.resourceId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
@@ -634,17 +749,17 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringu32(
-                            &m->basic.curveAmm_add_liquidity_V1.poolId,
+                            &m->nested.curveAmm_add_liquidity_V1.poolId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 1:
                     return _toStringVecBalance(
-                            &m->basic.curveAmm_add_liquidity_V1.amounts,
+                            &m->nested.curveAmm_add_liquidity_V1.amounts,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 2:
                     return _toStringAmount(
-                            &m->basic.curveAmm_add_liquidity_V1.min_mint_amount,
+                            &m->nested.curveAmm_add_liquidity_V1.min_mint_amount,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
@@ -654,27 +769,27 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringu32(
-                            &m->basic.curveAmm_exchange_V1.poolId,
+                            &m->nested.curveAmm_exchange_V1.poolId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 1:
                     return _toStringu32(
-                            &m->basic.curveAmm_exchange_V1.poolTokenId_i,
+                            &m->nested.curveAmm_exchange_V1.poolTokenId_i,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 2:
                     return _toStringu32(
-                            &m->basic.curveAmm_exchange_V1.poolTokenId_j,
+                            &m->nested.curveAmm_exchange_V1.poolTokenId_j,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 3:
                     return _toStringAmount(
-                            &m->basic.curveAmm_exchange_V1.dx,
+                            &m->nested.curveAmm_exchange_V1.dx,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 4:
                     return _toStringAmount(
-                            &m->basic.curveAmm_exchange_V1.min_dy,
+                            &m->nested.curveAmm_exchange_V1.min_dy,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
@@ -684,17 +799,17 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringu32(
-                            &m->basic.curveAmm_remove_liquidity_V1.poolId,
+                            &m->nested.curveAmm_remove_liquidity_V1.poolId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 1:
                     return _toStringAmount(
-                            &m->basic.curveAmm_remove_liquidity_V1.amount,
+                            &m->nested.curveAmm_remove_liquidity_V1.amount,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 2:
                     return  _toStringVecBalance(
-                            &m->basic.curveAmm_remove_liquidity_V1.min_amounts,
+                            &m->nested.curveAmm_remove_liquidity_V1.min_amounts,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
@@ -704,17 +819,17 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringu32(
-                            &m->basic.curveAmm_remove_liquidity_imbalance_V1.poolId,
+                            &m->nested.curveAmm_remove_liquidity_imbalance_V1.poolId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 1:
                     return _toStringVecBalance(
-                            &m->basic.curveAmm_remove_liquidity_imbalance_V1.amounts,
+                            &m->nested.curveAmm_remove_liquidity_imbalance_V1.amounts,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 2:
                     return  _toStringAmount(
-                            &m->basic.curveAmm_remove_liquidity_imbalance_V1.max_burn_amount,
+                            &m->nested.curveAmm_remove_liquidity_imbalance_V1.max_burn_amount,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
@@ -724,22 +839,22 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringu32(
-                            &m->basic.curveAmm_remove_liquidity_one_coin_V1.poolId,
+                            &m->nested.curveAmm_remove_liquidity_one_coin_V1.poolId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 1:
                     return _toStringAmount(
-                            &m->basic.curveAmm_remove_liquidity_one_coin_V1.token_amount,
+                            &m->nested.curveAmm_remove_liquidity_one_coin_V1.token_amount,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 2:
                     return _toStringu32(
-                            &m->basic.curveAmm_remove_liquidity_one_coin_V1.poolTokenId,
+                            &m->nested.curveAmm_remove_liquidity_one_coin_V1.poolTokenId,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 3:
                     return _toStringAmount(
-                            &m->basic.curveAmm_remove_liquidity_one_coin_V1.min_amount,
+                            &m->nested.curveAmm_remove_liquidity_one_coin_V1.min_amount,
                             outValue, outValueLen,
                             pageIdx, pageCount);
 
@@ -750,12 +865,12 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringAccountId_V1(
-                            &m->basic.gensOptOut_distribute_external_V1.to,
+                            &m->nested.gensOptOut_distribute_external_V1.to,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 case 1:
                     return _toStringBlockNumber(
-                            &m->basic.gensOptOut_distribute_external_V1.block_number,
+                            &m->nested.gensOptOut_distribute_external_V1.block_number,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
@@ -765,12 +880,59 @@ parser_error_t _getMethod_ItemValue_V1(
             switch (itemIdx) {
                 case 0:
                     return _toStringAmount(
-                            &m->basic.gensOptOut_buy_V1.amount,
+                            &m->nested.gensOptOut_buy_V1.amount,
                             outValue, outValueLen,
                             pageIdx, pageCount);
                 default:
                     return parser_no_data;
             }
+            case PRIV_ID_EQDEX_CREATE_ORDER:               // EqDex:create_order
+            switch (itemIdx) {
+                case 0:
+                    return _toStringAsset_V1(
+                            &m->nested.eqDex_create_order_V1.asset,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                case 1:
+                    return _toStringOrderType(
+                            &m->nested.eqDex_create_order_V1.order_type,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                case 2:
+                    return _toStringSide(
+                            &m->nested.eqDex_create_order_V1.side,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                case 3:
+                    return _toStringFixedU128(
+                            &m->nested.eqDex_create_order_V1.amount,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                default:
+                    return parser_no_data;
+            }
+            case PRIV_ID_EQDEX_DELETE_ORDER_EXTERNAL:      // EqDex:delete_order_external
+            switch (itemIdx) {
+                case 0:
+                    return _toStringAsset_V1(
+                            &m->nested.eqDex_delete_order_external_V1.asset,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                case 1:
+                    return _toStringu64(
+                            &m->nested.eqDex_delete_order_external_V1.order_id,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                case 2:
+                    return _toStringFixedI64(
+                            &m->nested.eqDex_delete_order_external_V1.price,
+                            outValue, outValueLen,
+                            pageIdx, pageCount);
+                default:
+                    return parser_no_data;
+            }
+            default:
+                return parser_ok;
     }
 
     return parser_ok;
@@ -781,15 +943,7 @@ bool _getMethod_ItemIsExpert_V1(uint8_t moduleIdx, uint8_t callIdx, uint8_t item
     return false;
 }
 
-bool _getMethod_IsNestingSupported_V1(uint8_t moduleIdx, uint8_t callIdx)
+bool _getMethod_IsNestingSupported_V1(uint8_t _moduleIdx, uint8_t _callIdx)
 {
-    uint16_t callPrivIdx = ((uint16_t)moduleIdx << 8u) + callIdx;
-
-    switch (callPrivIdx) {
-    case PRIV_ID_TRANSFER_TO_SUBACC:        // Subaccounts:transfer_to_subaccount
-    case PRIV_ID_TRANSFER_FROM_SUBACC:      // Subaccounts:transfer_from_subaccount
         return true;
-    default:
-        return false;
-    }
 }

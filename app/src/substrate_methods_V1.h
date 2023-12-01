@@ -27,6 +27,12 @@ extern "C" {
 #include <stdint.h>
 
 
+/// Pallet System
+#define PD_CALL_SYSTEM_REMARK_V1 1
+typedef struct {
+    pd_Bytes_t remark;
+} pd_system_remark_V1_t;
+
 /// Pallet Utility
 #define PD_CALL_UTILITY_BATCH_V1 0
 typedef struct {
@@ -130,7 +136,28 @@ typedef struct {
     pd_Balance_t amount;
 } pd_gensOptOut_buy_V1_t;
 
+/// Pallet EqDex
+#define PD_CALL_EQDEX_CREATE_ORDER_V1 1
+typedef struct {
+    eq_Asset_t asset;
+    pd_OrderType_t order_type;
+    pd_u8_t side;
+    pd_FixedU128_t amount;
+} pd_eqDex_create_order_V1_t;
+
+#define PD_CALL_EQDEX_DELETE_ORDER_EXTERNAL_V1 1
+typedef struct {
+    eq_Asset_t asset;
+    pd_u64_t order_id;
+    pd_FixedI64_t price;
+} pd_eqDex_delete_order_external_V1_t;
+
 typedef union {
+} pd_MethodBasic_V1_t;
+
+
+typedef union {
+    pd_system_remark_V1_t system_remark_V1;
     pd_utility_batch_V1_t utility_batch_V1;
     pd_vesting_vest_V1_t vesting_vest_V1;
     pd_eqbridge_transfer_native_V1_t eqbridge_transfer_native_V1;
@@ -143,13 +170,11 @@ typedef union {
     pd_gensOptOut_sell_V1_t gensOptOut_sell_V1;
     pd_gensOptOut_distribute_external_V1_t gensOptOut_distribute_external_V1;
     pd_gensOptOut_buy_V1_t gensOptOut_buy_V1;
-} pd_MethodBasic_V1_t;
-
-
-typedef union {
     pd_eqbalances_transfer_V1_t eqbalances_transfer_V1;
     pd_subaccounts_transfer_to_subaccount_V1_t subaccounts_transfer_to_subaccount_V1;
     pd_subaccounts_transfer_from_subaccount_V1_t subaccounts_transfer_from_subaccount_V1;
+    pd_eqDex_create_order_V1_t eqDex_create_order_V1;
+    pd_eqDex_delete_order_external_V1_t eqDex_delete_order_external_V1;
 } pd_MethodNested_V1_t;
 
 typedef union {

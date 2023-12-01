@@ -20,6 +20,7 @@ extern "C" {
 #endif
 
 // Modules names
+static const char* STR_MO_SYSTEM = "System";
 static const char* STR_MO_UTILITY = "Utility";
 static const char* STR_MO_EQBALANCES = "EqBalances";
 static const char* STR_MO_VESTING = "Vesting";
@@ -33,6 +34,7 @@ static const char* STR_MO_EQDEX = "EqDex";
 
 
 // Methods names
+static const char* STR_ME_REMARK = "Remark";
 static const char* STR_ME_BATCH = "Batch";
 static const char* STR_ME_LOCK = "Lock";
 static const char* STR_ME_UNLOCK_EXTERNAL = "Unlock external";

@@ -87,7 +87,8 @@ typedef uint8_t pd_FixedI128_t[16];
 
 typedef struct {
     uint8_t type;
-    pd_FixedI64_t limit;
+    pd_FixedI64_t price;
+    uint64_t expiration_time;
 } pd_OrderType_t;
 
 typedef struct {
